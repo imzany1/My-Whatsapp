@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Personal WhatsApp Web Interface">
+  <title>My WhatsApp</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💬</text></svg>">
+</head>
+<body>
+  <!-- Login / QR Screen -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-card">
+      <div class="login-logo">💬</div>
+      <h1>My WhatsApp</h1>
+      <p>Scan the QR code below with your WhatsApp mobile app to connect.</p>
+      <div id="qr-area">
+        <div class="spinner" style="margin: 40px auto;"></div>
+        <p style="color: var(--text-muted); font-size: 13px; margin-top: 12px;">Waiting for QR code...</p>
+      </div>
+      <div id="login-status" class="status-badge connecting" style="margin-top: 16px;">
+        <span class="status-dot"></span>
+        <span id="login-status-text">Connecting...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>
+          💬 Chats
+          <span id="connection-dot" class="connection-indicator"></span>
+        </h2>
+        <div id="self-phone" style="font-size: 12px; color: var(--text-muted);"></div>
+      </div>
+      <div class="search-box">
+        <input type="text" class="search-input" id="search-input" placeholder="Search conversations..." autocomplete="off">
+      </div>
+      <ul class="chat-list" id="chat-list"></ul>
+    </aside>
+
+    <!-- Main Chat -->
+    <main class="main" id="main-area">
+      <div class="empty-state" id="empty-state">
+        <div class="icon">💬</div>
+        <p>Select a conversation to start</p>
+      </div>
+
+      <div id="chat-view" style="display: none; flex-direction: column; height: 100%;">
+        <div class="chat-header" id="chat-header"></div>
+        <div class="messages-container" id="messages-container"></div>
+        <div class="compose">
+          <textarea class="compose-input" id="compose-input" placeholder="Type a message..." rows="1"></textarea>
+          <button class="send-btn" id="send-btn" disabled title="Send">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
