@@ -8,6 +8,7 @@ import {
   extractMessageContent,
   getContentType,
   normalizeMessageContent,
+  downloadMediaMessage,
 } from "@whiskeysockets/baileys";
 import pino from "pino";
 import path from "node:path";
@@ -27,9 +28,11 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const AUTH_DIR = path.join(__dirname, ".data", "auth");
 const LID_DIR = path.join(__dirname, ".data", "lid-cache");
+const MEDIA_DIR = path.join(__dirname, "public", "media");
 
 fs.mkdirSync(AUTH_DIR, { recursive: true });
 fs.mkdirSync(LID_DIR, { recursive: true });
+fs.mkdirSync(MEDIA_DIR, { recursive: true });
 
 // ── State ───────────────────────────────────────────────────────────────
 
@@ -287,6 +290,20 @@ async function handleMessagesUpsert(upsert) {
       const body = extractText(msg.message) ?? (extractMediaType(msg.message) ? `[${extractMediaType(msg.message)}]` : null);
       const mediaType = extractMediaType(msg.message);
 
+      let mediaPath = null;
+      if (mediaType && (mediaType === "image" || mediaType === "video" || mediaType === "audio")) {
+        try {
+          const buffer = await downloadMediaMessage(msg, "buffer", {}, { logger, reauthoriseNetworkQueries: true });
+          const ext = mediaType === "image" ? "jpg" : mediaType === "video" ? "mp4" : "ogg";
+          const filename = `${messageId}.${ext}`;
+          const fullPath = path.join(MEDIA_DIR, filename);
+          fs.writeFileSync(fullPath, buffer);
+          mediaPath = `/media/${filename}`;
+        } catch (err) {
+          console.error("Failed to download media:", err.message);
+        }
+      }
+
       if (!body && !mediaType) continue;
 
       // Group metadata
@@ -310,6 +327,7 @@ async function handleMessagesUpsert(upsert) {
         senderName: fromMe ? "You" : senderName,
         body,
         mediaType,
+        mediaPath,
         isGroup,
         groupName,
         fromMe,

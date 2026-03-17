@@ -323,10 +323,26 @@ function renderMessages(messages, chatJid) {
         ? `<div class="message-sender">${escapeHtml(msg.senderName || msg.senderPhone || "Unknown")}</div>`
         : "";
 
+    let mediaHtml = "";
+    if (msg.mediaPath) {
+      if (msg.mediaType === "image") {
+        mediaHtml = `<div class="message-media"><img src="${msg.mediaPath}" alt="image" onclick="window.open('${msg.mediaPath}', '_blank')" /></div>`;
+      } else if (msg.mediaType === "video") {
+        mediaHtml = `<div class="message-media"><video src="${msg.mediaPath}" controls></video></div>`;
+      } else if (msg.mediaType === "audio") {
+        mediaHtml = `<div class="message-media"><audio src="${msg.mediaPath}" controls></audio></div>`;
+      }
+    }
+
+    const bodyText = (msg.body && !msg.body.startsWith("[")) || !msg.mediaPath
+      ? `<div class="message-text">${escapeHtml(msg.body)}</div>`
+      : "";
+
     html += `
       <div class="message ${cls}" data-id="${msg.whatsappId}">
         ${senderLabel}
-        <div class="message-text">${escapeHtml(msg.body)}</div>
+        ${mediaHtml}
+        ${bodyText}
         <div class="message-meta">
           <span class="message-time">${time}</span>
           ${isMine ? '<span class="message-read">✓✓</span>' : ""}
@@ -402,12 +418,28 @@ function appendMessage(msg) {
       ? `<div class="message-sender">${escapeHtml(msg.senderName || msg.senderPhone || "Unknown")}</div>`
       : "";
 
+  let mediaHtml = "";
+  if (msg.mediaPath) {
+    if (msg.mediaType === "image") {
+      mediaHtml = `<div class="message-media"><img src="${msg.mediaPath}" alt="image" onclick="window.open('${msg.mediaPath}', '_blank')" /></div>`;
+    } else if (msg.mediaType === "video") {
+      mediaHtml = `<div class="message-media"><video src="${msg.mediaPath}" controls></video></div>`;
+    } else if (msg.mediaType === "audio") {
+      mediaHtml = `<div class="message-media"><audio src="${msg.mediaPath}" controls></audio></div>`;
+    }
+  }
+
+  const bodyText = (msg.body && !msg.body.startsWith("[")) || !msg.mediaPath
+    ? `<div class="message-text">${escapeHtml(msg.body)}</div>`
+    : "";
+
   const div = document.createElement("div");
   div.className = `message ${cls}`;
   div.dataset.id = msg.whatsappId;
   div.innerHTML = `
     ${senderLabel}
-    <div class="message-text">${escapeHtml(msg.body)}</div>
+    ${mediaHtml}
+    ${bodyText}
     <div class="message-meta">
       <span class="message-time">${time}</span>
       ${isMine ? '<span class="message-read">✓✓</span>' : ""}

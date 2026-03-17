@@ -40,6 +40,7 @@ export async function initDatabase() {
       sender_name     TEXT,
       body            TEXT,
       media_type      TEXT,
+      media_path      TEXT,
       is_group        INTEGER NOT NULL DEFAULT 0,
       group_name      TEXT,
       from_me         INTEGER NOT NULL DEFAULT 0,
@@ -52,6 +53,13 @@ export async function initDatabase() {
   try { db.run(`CREATE INDEX IF NOT EXISTS idx_messages_chat ON messages(chat_jid)`); } catch {}
   try { db.run(`CREATE INDEX IF NOT EXISTS idx_messages_ts ON messages(timestamp DESC)`); } catch {}
   try { db.run(`CREATE UNIQUE INDEX IF NOT EXISTS idx_messages_wa ON messages(whatsapp_id, chat_jid)`); } catch {}
+
+  // Migration: Add media_path if it doesn't exist
+  try {
+    db.run(`ALTER TABLE messages ADD COLUMN media_path TEXT`);
+  } catch (err) {
+    // Column already exists, ignore
+  }
 
   db.run(`
     CREATE TABLE IF NOT EXISTS contacts (
@@ -141,9 +149,9 @@ export function insertMessage(msg) {
   try {
     runSql(
       `INSERT OR IGNORE INTO messages
-        (whatsapp_id, chat_jid, sender_jid, sender_phone, sender_name, body, media_type, is_group, group_name, from_me, timestamp, is_read)
+        (whatsapp_id, chat_jid, sender_jid, sender_phone, sender_name, body, media_type, media_path, is_group, group_name, from_me, timestamp, is_read)
        VALUES
-        ($whatsappId, $chatJid, $senderJid, $senderPhone, $senderName, $body, $mediaType, $isGroup, $groupName, $fromMe, $timestamp, $isRead)`,
+        ($whatsappId, $chatJid, $senderJid, $senderPhone, $senderName, $body, $mediaType, $mediaPath, $isGroup, $groupName, $fromMe, $timestamp, $isRead)`,
       {
         $whatsappId: msg.whatsappId ?? null,
         $chatJid: msg.chatJid,
@@ -152,6 +160,7 @@ export function insertMessage(msg) {
         $senderName: msg.senderName ?? null,
         $body: msg.body ?? null,
         $mediaType: msg.mediaType ?? null,
+        $mediaPath: msg.mediaPath ?? null,
         $isGroup: msg.isGroup ? 1 : 0,
         $groupName: msg.groupName ?? null,
         $fromMe: msg.fromMe ? 1 : 0,
@@ -177,6 +186,8 @@ export function getChats() {
       m.sender_name     AS lastSenderName,
       m.sender_phone    AS lastSenderPhone,
       m.body            AS lastBody,
+      m.media_type      AS lastMediaType,
+      m.media_path      AS lastMediaPath,
       m.timestamp       AS lastTimestamp,
       m.from_me         AS lastFromMe,
       (SELECT COUNT(*) FROM messages m2 WHERE m2.chat_jid = m.chat_jid AND m2.is_read = 0 AND m2.from_me = 0) AS unreadCount,
@@ -200,7 +211,7 @@ export function getMessages(chatJid, limit = 100, offset = 0) {
     `SELECT
       id, whatsapp_id AS whatsappId, chat_jid AS chatJid,
       sender_jid AS senderJid, sender_phone AS senderPhone, sender_name AS senderName,
-      body, media_type AS mediaType, is_group AS isGroup, group_name AS groupName,
+      body, media_type AS mediaType, media_path AS mediaPath, is_group AS isGroup, group_name AS groupName,
       from_me AS fromMe, timestamp, is_read AS isRead
     FROM messages
     WHERE chat_jid = $chatJid
